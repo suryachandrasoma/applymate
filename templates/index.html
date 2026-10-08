@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}ApplyMate - Global Career Automation{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row align-items-center g-5">
+    <div class="col-lg-6">
+      <span class="badge bg-success-subtle text-success fw-semibold mb-3 p-2">
+        <i class="fa-solid fa-bolt me-1"></i> AI-Powered Job Applications
+      </span>
+      <h1 class="display-4 fw-bold mb-3">
+        Automate your <span class="text-success">global career</span> journey
+      </h1>
+      <p class="lead text-muted mb-4">
+        ApplyMate builds your Workday-compliant profile and submits
+        tailored applications to MS-abroad roles while you focus on
+        your studies.
+      </p>
+      <div class="d-flex gap-3">
+        <a href="{{ url_for('signup') }}" class="btn btn-success btn-lg px-4">
+          <i class="fa-solid fa-rocket me-2"></i> Get Started
+        </a>
+        <a href="{{ url_for('login') }}" class="btn btn-outline-dark btn-lg px-4">
+          Login
+        </a>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-lg p-4 rounded-4">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-success text-white rounded-circle p-3 me-3">
+            <i class="fa-solid fa-shield-halved fa-lg"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-bold">Secure Profile Builder</h5>
+            <small class="text-muted">Complete 7-step onboarding</small>
+          </div>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Personal & social details</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Resume + project links</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Visa & clearance info</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Experience & education</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Compensation & availability</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Travel & preferences</li>
+          <li class="list-group-item"><i class="fa-solid fa-check text-success me-2"></i> Demographics (voluntary)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

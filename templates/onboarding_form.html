@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% block title %}Onboarding - ApplyMate{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Student Profile & Job Onboarding</h3>
+      <p class="text-muted mb-0 small">Complete your profile with Workday-compliant specifications.</p>
+    </div>
+    <span class="badge bg-success-subtle text-success">
+      <span class="spinner-grow spinner-grow-sm me-1"></span> Enhanced Custom Form
+    </span>
+  </div>
+
+  <!-- Progress -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between flex-wrap gap-2 mb-3" id="step-nav-bar">
+        {% for i, label in [(1,'Personal'),(2,'Resume & Projects'),(3,'Visa & Clearance'),
+                            (4,'Experience & Edu'),(5,'Comp & Avail'),(6,'Travel & Prefs'),
+                            (7,'Demographics')] %}
+          <div class="text-center flex-fill" style="cursor:pointer;" onclick="goToStep({{ i }})">
+            <div id="nav-dot-{{ i }}"
+                 class="step-dot mx-auto {% if i==1 %}bg-success text-white{% else %}bg-light text-muted{% endif %}">
+              {{ i }}
+            </div>
+            <small class="d-block mt-2 text-muted fw-semibold">{{ label }}</small>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="progress" style="height:8px;">
+        <div id="progress-bar-fill" class="progress-bar bg-success" style="width:14.28%"></div>
+      </div>
+    </div>
+  </div>
+
+  <form id="applymate-form" method="POST" action="{{ url_for('onboarding_submit') }}"
+        enctype="multipart/form-data" class="card border-0 shadow-sm">
+
+    <!-- STEP 1 -->
+    <div class="form-step p-4 p-md-5" id="step-1">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-user-circle text-success me-2"></i>1. Personal, Contact & Social Links</h4>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">First Name *</label>
+          <input name="first_name" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Middle Name</label>
+          <input name="middle_name" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Last Name *</label>
+          <input name="last_name" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Email *</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Phone *</label>
+          <div class="input-group">
+            <select name="phone_country_code" class="form-select" style="max-width:130px;">
+              <option value="+1">+1 (USA)</option>
+              <option value="+91">+91 (India)</option>
+              <option value="+44">+44 (UK)</option>
+              <option value="+49">+49 (Germany)</option>
+              <option value="+61">+61 (Australia)</option>
+              <option value="+81">+81 (Japan)</option>
+            </select>
+            <input type="tel" name="phone" maxlength="10" class="form-control" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Date of Birth *</label>
+          <input type="date" name="dob" class="form-control" required>
+        </div>
+      </div>
+
+      <h6 class="fw-bold mt-4"><i class="fa-solid fa-location-dot text-success me-2"></i>Current Address</h6>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label small fw-semibold">Street *</label>
+          <input name="street" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">City *</label>
+          <input name="city" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">State *</label>
+          <input name="state" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Postal Code *</label>
+          <input name="postal_code" class="form-control" required>
+        </div>
+      </div>
+
+      <h6 class="fw-bold mt-4"><i class="fa-solid fa-share-nodes text-success me-2"></i>Social Profiles</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">LinkedIn URL *</label>
+          <input type="url" name="linkedin_url" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">GitHub / Portfolio</label>
+          <input type="url" name="github_url" class="form-control">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-2">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-file-arrow-up text-success me-2"></i>2. Resume & Projects</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="border rounded-3 p-4 text-center bg-light">
+            <i class="fa-solid fa-cloud-arrow-up fa-2x text-success mb-2"></i>
+            <label class="form-label d-block fw-semibold">Upload Resume / CV *</label>
+            <small class="text-muted d-block mb-2">PDF, DOCX (max 5MB)</small>
+            <input type="file" name="resume" accept=".pdf,.doc,.docx" class="form-control" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="border rounded-3 p-4 text-center bg-light">
+            <i class="fa-solid fa-file-pen fa-2x text-success mb-2"></i>
+            <label class="form-label d-block fw-semibold">Upload Cover Letter</label>
+            <small class="text-muted d-block mb-2">PDF, DOCX (max 5MB)</small>
+            <input type="file" name="cover_letter" accept=".pdf,.doc,.docx" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-link text-success me-2"></i>Project Links</h6>
+          <button type="button" class="btn btn-sm btn-outline-success" onclick="addProjectLinkField()">
+            <i class="fa-solid fa-plus me-1"></i>Add
+          </button>
+        </div>
+        <div id="project-links-container">
+          <div class="input-group mb-2 project-link-row">
+            <input type="url" name="project_links" class="form-control" placeholder="https://github.com/...">
+            <button type="button" class="btn btn-outline-danger" disabled onclick="removeProjectLinkField(this)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-3">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-passport text-success me-2"></i>3. Work Authorization & Clearance</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Legally authorized to work? *</label>
+          <select name="work_authorized" class="form-select" required>
+            <option value="">Select</option>
+            <option>Yes</option><option>No</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Visa Status *</label>
+          <select name="visa_status" class="form-select" required>
+            <option value="">Select</option>
+            <option>F-1 Student (CPT)</option>
+            <option>F-1 Student (OPT)</option>
+            <option>F-1 Student (STEM OPT Extension)</option>
+            <option>H-1B Visa</option>
+            <option>Dependent Visa (H-4 EAD / L-2 EAD)</option>
+            <option>Citizen / Permanent Resident</option>
+            <option>Other / Requiring Full Sponsorship</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Require sponsorship? *</label>
+          <select name="sponsorship" class="form-select" required>
+            <option value="">Select</option>
+            <option value="yes">Yes</option><option value="no">No</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Security clearance eligibility? *</label>
+          <select name="security_clearance" class="form-select" required>
+            <option value="">Select</option>
+            <option>Yes</option><option>No</option><option>Unsure / Depends on role</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-4">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-briefcase text-success me-2"></i>4. Experience & Education</h4>
+
+      <div class="d-flex justify-content-between mb-2">
+        <h6 class="fw-bold mb-0">Professional Experience</h6>
+        <button type="button" class="btn btn-sm btn-outline-success" onclick="addExperienceBlock()">
+          <i class="fa-solid fa-plus me-1"></i>Add
+        </button>
+      </div>
+      <div id="experience-container">
+        <div class="border rounded-3 p-3 mb-3 experience-card bg-light">
+          <div class="row g-3">
+            <div class="col-md-4"><label class="small fw-semibold">Company *</label><input name="exp_company[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">Title *</label><input name="exp_title[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">Location *</label><input name="exp_location[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">From *</label><input type="date" name="exp_from[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">To</label><input type="date" name="exp_to[]" class="form-control"></div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" name="exp_current[]" value="yes" class="form-check-input" onchange="toggleCurrent(this)">
+                <label class="form-check-label small">Currently Working Here</label>
+              </div>
+            </div>
+            <div class="col-12"><label class="small fw-semibold">Description</label><textarea name="exp_description[]" rows="2" class="form-control"></textarea></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger mt-2" disabled onclick="removeBlock(this)">
+            <i class="fa-solid fa-trash"></i> Remove
+          </button>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mb-2 mt-4">
+        <h6 class="fw-bold mb-0">Education</h6>
+        <button type="button" class="btn btn-sm btn-outline-success" onclick="addEducationBlock()">
+          <i class="fa-solid fa-plus me-1"></i>Add
+        </button>
+      </div>
+      <div id="education-container">
+        <div class="border rounded-3 p-3 mb-3 education-card bg-light">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="small fw-semibold">Level *</label>
+              <select name="edu_level[]" class="form-select" required>
+                <option value="">Select</option>
+                <option>Master of Science (MS)</option>
+                <option>Bachelor's Degree</option>
+                <option>Associate Degree</option>
+                <option>High School</option>
+                <option>Doctorate / Ph.D.</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="small fw-semibold">Major *</label><input name="edu_major[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">University *</label><input name="edu_university[]" class="form-control" required></div>
+            <div class="col-md-2"><label class="small fw-semibold">From *</label><input type="number" name="edu_year_from[]" class="form-control" required></div>
+            <div class="col-md-2"><label class="small fw-semibold">To *</label><input type="number" name="edu_year_to[]" class="form-control" required></div>
+            <div class="col-md-4"><label class="small fw-semibold">GPA / CGPA</label><input name="edu_gpa[]" class="form-control"></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger mt-2" disabled onclick="removeBlock(this)">
+            <i class="fa-solid fa-trash"></i> Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-5">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-money-bill-wave text-success me-2"></i>5. Compensation & Availability</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="small fw-semibold">Expected Salary *</label>
+          <div class="input-group">
+            <select name="salary_currency" class="form-select" style="max-width:120px;">
+              <option>USD</option><option>INR</option><option>EUR</option>
+              <option>GBP</option><option>CAD</option><option>AUD</option>
+            </select>
+            <input type="number" name="expected_salary" class="form-control" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Start Date *</label>
+          <input type="date" name="start_date" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Notice Period *</label>
+          <select name="notice_period" class="form-select" required>
+            <option value="">Select</option>
+            <option>Immediate / Available Now</option>
+            <option>2 Weeks</option>
+            <option>1 Month</option>
+            <option>2+ Months / Upon Graduation</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Work Schedule</label>
+          <select name="work_schedule" class="form-select">
+            <option>Standard Business Hours</option>
+            <option>Flexible / Open to Shifts</option>
+            <option>Overtime / Weekend availability if required</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-6">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-map-location-dot text-success me-2"></i>6. Travel & Preferences</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="small fw-semibold">Willing to relocate? *</label>
+          <select name="relocation" class="form-select" required>
+            <option value="">Select</option>
+            <option>Yes, globally</option>
+            <option>Yes, within target country only</option>
+            <option>No relocation</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Work Arrangement *</label>
+          <select name="work_arrangement" class="form-select" required>
+            <option value="">Select</option>
+            <option>Remote / Hybrid / In-Office (Flexible)</option>
+            <option>Remote Only</option>
+            <option>Hybrid Only</option>
+            <option>In-Office Only</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="small fw-semibold">Travel willingness *</label>
+          <select name="travel_willingness" class="form-select" required>
+            <option value="">Select</option>
+            <option>0 - 25%</option>
+            <option>Up to 50%</option>
+            <option>75%</option>
+            <option>&gt;75%</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="form-step p-4 p-md-5 d-none" id="step-7">
+      <h4 class="fw-bold mb-3"><i class="fa-solid fa-shield-heart text-success me-2"></i>7. Demographics & Consent</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="small fw-semibold">Gender</label>
+          <select name="gender" class="form-select">
+            <option>Decline to self-identify</option>
+            <option>Male</option><option>Female</option><option>Non-binary</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Race / Ethnicity</label>
+          <select name="ethnicity" class="form-select">
+            <option>Decline to self-identify</option>
+            <option>Asian</option><option>Black or African American</option>
+            <option>Hispanic or Latino</option><option>White</option>
+            <option>Two or More Races</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Veteran status</label>
+          <select name="veteran_status" class="form-select">
+            <option>Decline to self-identify</option>
+            <option>Yes, I am a protected veteran</option>
+            <option>No, I am not a protected veteran</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="small fw-semibold">Disability</label>
+          <select name="disability_status" class="form-select">
+            <option>Decline to self-identify</option>
+            <option>Yes, I have a disability (or previously had one)</option>
+            <option>No, I do not have a disability</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="terms_accepted" id="terms" required>
+            <label class="form-check-label small" for="terms">
+              I agree to ApplyMate's terms of service and consent to submitting job
+              applications on my behalf. *
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="email_updates" id="emailupd" checked>
+            <label class="form-check-label small" for="emailupd">
+              I would like to receive automated email updates.
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer nav -->
+    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+      <button type="button" id="prev-btn" class="btn btn-outline-secondary" disabled onclick="changeStep(-1)">
+        <i class="fa-solid fa-arrow-left me-1"></i> Previous
+      </button>
+      <small class="text-muted d-none d-md-block">Encrypted & securely managed by ApplyMate</small>
+      <div class="d-flex gap-2">
+        <button type="button" id="next-btn" class="btn btn-success" onclick="changeStep(1)">
+          Next <i class="fa-solid fa-arrow-right ms-1"></i>
+        </button>
+        <button type="submit" id="submit-btn" class="btn btn-success d-none">
+          <i class="fa-solid fa-check me-1"></i> Submit Profile
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/form.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard - ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Student Dashboard</h2>
+      <p class="text-muted mb-0 small">Manage your ApplyMate profile & applications</p>
+    </div>
+    <a href="{{ url_for('onboarding_form') }}" class="btn btn-success">
+      <i class="fa-solid fa-pen-to-square me-2"></i>
+      {% if profile %}Edit Profile{% else %}Complete Onboarding{% endif %}
+    </a>
+  </div>
+
+  {% if profile %}
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-success text-white rounded-circle p-3 me-3">
+              <i class="fa-solid fa-id-card fa-lg"></i>
+            </div>
+            <div>
+              <h6 class="text-muted mb-0 small">Registration ID</h6>
+              <span class="fw-bold">{{ profile.registration_id }}</span>
+            </div>
+          </div>
+          <hr>
+          <p class="small mb-1"><strong>Name:</strong> {{ profile.first_name }} {{ profile.last_name }}</p>
+          <p class="small mb-1"><strong>Email:</strong> {{ profile.email }}</p>
+          <p class="small mb-1"><strong>Phone:</strong> {{ profile.phone_country_code }} {{ profile.phone }}</p>
+          <p class="small mb-0"><strong>Visa:</strong> {{ profile.visa_status or '—' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-briefcase text-success me-2"></i>Experience</h6>
+          {% for exp in profile.experiences_list() %}
+            <div class="mb-2 pb-2 {% if not loop.last %}border-bottom{% endif %}">
+              <div class="fw-semibold small">{{ exp.title }}</div>
+              <div class="text-muted small">{{ exp.company }}</div>
+              <div class="text-muted small">{{ exp.from }} - {{ 'Present' if exp.current == 'yes' else exp.to }}</div>
+            </div>
+          {% else %}
+            <p class="text-muted small">No experience added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-graduation-cap text-success me-2"></i>Education</h6>
+          {% for edu in profile.educations_list() %}
+            <div class="mb-2 pb-2 {% if not loop.last %}border-bottom{% endif %}">
+              <div class="fw-semibold small">{{ edu.level }}</div>
+              <div class="text-muted small">{{ edu.major }}</div>
+              <div class="text-muted small">{{ edu.university }} ({{ edu.year_from }}-{{ edu.year_to }})</div>
+            </div>
+          {% else %}
+            <p class="text-muted small">No education added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-paperclip text-success me-2"></i>Uploaded Documents & Links</h6>
+          <div class="row">
+            <div class="col-md-6">
+              {% if profile.resume_filename %}
+                <p><i class="fa-solid fa-file-pdf text-danger me-2"></i>
+                  <a href="{{ url_for('download_file', filename=profile.resume_filename) }}">Resume / CV</a>
+                </p>
+              {% else %}<p class="text-muted small">No resume uploaded.</p>{% endif %}
+
+              {% if profile.cover_letter_filename %}
+                <p><i class="fa-solid fa-file-lines text-primary me-2"></i>
+                  <a href="{{ url_for('download_file', filename=profile.cover_letter_filename) }}">Cover Letter</a>
+                </p>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              {% for link in profile.project_links_list() %}
+                <p class="small mb-1"><i class="fa-solid fa-link text-success me-2"></i>
+                  <a href="{{ link }}" target="_blank">{{ link }}</a>
+                </p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card border-0 shadow-sm text-center py-5">
+    <div class="card-body">
+      <i class="fa-solid fa-clipboard-list display-3 text-success mb-3"></i>
+      <h4 class="fw-bold">Profile Incomplete</h4>
+      <p class="text-muted">Complete the 7-step onboarding to submit your profile to our team.</p>
+      <a href="{{ url_for('onboarding_form') }}" class="btn btn-success btn-lg">
+        Start Onboarding <i class="fa-solid fa-arrow-right ms-2"></i>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

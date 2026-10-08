@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Lead Detail - {{ lead.registration_id }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-0">{{ lead.first_name }} {{ lead.last_name }}</h3>
+      <code class="small">{{ lead.registration_id }}</code>
+    </div>
+    <div class="d-flex gap-2">
+      {% if current_user.role == 'admin' %}
+      <form method="POST" action="{{ url_for('assign_lead', lead_id=lead.id) }}" class="d-flex gap-2">
+        <select name="assigner_id" class="form-select form-select-sm">
+          <option value="">Unassigned</option>
+          {% for a in assigners %}
+            <option value="{{ a.id }}" {% if lead.assigned_to==a.id %}selected{% endif %}>{{ a.full_name }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-sm btn-success">Assign</button>
+      </form>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('update_lead_status', lead_id=lead.id) }}" class="d-flex gap-2">
+        <select name="status" class="form-select form-select-sm">
+          {% for s in ['new','in_progress','applied','closed'] %}
+            <option value="{{ s }}" {% if lead.status==s %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-sm btn-dark">Update</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-user me-2"></i>Personal Info</h6>
+          <p class="small mb-1"><strong>Email:</strong> {{ lead.email }}</p>
+          <p class="small mb-1"><strong>Phone:</strong> {{ lead.phone_country_code }} {{ lead.phone }}</p>
+          <p class="small mb-1"><strong>DOB:</strong> {{ lead.dob }}</p>
+          <p class="small mb-1"><strong>Address:</strong>
+            {{ lead.street }}, {{ lead.city }}, {{ lead.state }} - {{ lead.postal_code }}</p>
+          <p class="small mb-1"><strong>LinkedIn:</strong>
+            <a href="{{ lead.linkedin_url }}" target="_blank">{{ lead.linkedin_url }}</a></p>
+          {% if lead.github_url %}
+          <p class="small mb-0"><strong>GitHub:</strong>
+            <a href="{{ lead.github_url }}" target="_blank">{{ lead.github_url }}</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-passport me-2"></i>Visa & Clearance</h6>
+          <p class="small mb-1"><strong>Work authorized:</strong> {{ lead.work_authorized }}</p>
+          <p class="small mb-1"><strong>Visa:</strong> {{ lead.visa_status }}</p>
+          <p class="small mb-1"><strong>Sponsorship required:</strong> {{ lead.sponsorship_required }}</p>
+          <p class="small mb-0"><strong>Security clearance:</strong> {{ lead.security_clearance }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-briefcase me-2"></i>Experience</h6>
+          {% for exp in lead.experiences_list() %}
+            <div class="mb-2 pb-2 border-bottom">
+              <div class="fw-semibold small">{{ exp.title }} — {{ exp.company }}</div>
+              <div class="text-muted small">{{ exp.location }} | {{ exp.from }} – {{ 'Present' if exp.current == 'yes' else exp.to }}</div>
+              {% if exp.description %}<div class="small mt-1">{{ exp.description }}</div>{% endif %}
+            </div>
+          {% else %}<p class="small text-muted mb-0">No experience.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-graduation-cap me-2"></i>Education</h6>
+          {% for edu in lead.educations_list() %}
+            <div class="mb-2 pb-2 border-bottom">
+              <div class="fw-semibold small">{{ edu.level }} — {{ edu.major }}</div>
+              <div class="text-muted small">{{ edu.university }} ({{ edu.year_from }}–{{ edu.year_to }}) | GPA: {{ edu.gpa or '—' }}</div>
+            </div>
+          {% else %}<p class="small text-muted mb-0">No education.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-money-bill-wave me-2"></i>Compensation & Availability</h6>
+          <p class="small mb-1"><strong>Expected salary:</strong> {{ lead.salary_currency }} {{ lead.expected_salary }}</p>
+          <p class="small mb-1"><strong>Start date:</strong> {{ lead.start_date }}</p>
+          <p class="small mb-1"><strong>Notice:</strong> {{ lead.notice_period }}</p>
+          <p class="small mb-0"><strong>Schedule:</strong> {{ lead.work_schedule }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-map-location-dot me-2"></i>Travel & Preferences</h6>
+          <p class="small mb-1"><strong>Relocation:</strong> {{ lead.relocation }}</p>
+          <p class="small mb-1"><strong>Work arrangement:</strong> {{ lead.work_arrangement }}</p>
+          <p class="small mb-0"><strong>Travel:</strong> {{ lead.travel_willingness }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-paperclip me-2"></i>Documents & Links</h6>
+          {% if lead.resume_filename %}
+            <p class="small mb-1"><i class="fa-solid fa-file-pdf text-danger me-2"></i>
+              <a href="{{ url_for('download_file', filename=lead.resume_filename) }}">Resume</a></p>
+          {% endif %}
+          {% if lead.cover_letter_filename %}
+            <p class="small mb-1"><i class="fa-solid fa-file-lines text-primary me-2"></i>
+              <a href="{{ url_for('download_file', filename=lead.cover_letter_filename) }}">Cover Letter</a></p>
+          {% endif %}
+          {% for link in lead.project_links_list() %}
+            <p class="small mb-1"><i class="fa-solid fa-link text-success me-2"></i>
+              <a href="{{ link }}" target="_blank">{{ link }}</a></p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold text-success"><i class="fa-solid fa-shield-heart me-2"></i>Demographics</h6>
+          <p class="small mb-1"><strong>Gender:</strong> {{ lead.gender }}</p>
+          <p class="small mb-1"><strong>Ethnicity:</strong> {{ lead.ethnicity }}</p>
+          <p class="small mb-1"><strong>Veteran:</strong> {{ lead.veteran_status }}</p>
+          <p class="small mb-0"><strong>Disability:</strong> {{ lead.disability_status }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

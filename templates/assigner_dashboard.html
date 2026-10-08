@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Assigner Dashboard - ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-1">Assigner Dashboard</h2>
+  <p class="text-muted small mb-4">Your assigned leads & unassigned queue</p>
+
+  <div class="row g-3 mb-4">
+    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
+      <small class="text-muted">Assigned to me</small>
+      <h3 class="fw-bold text-success mb-0">{{ stats.mine }}</h3>
+    </div></div></div>
+    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
+      <small class="text-muted">Unassigned</small>
+      <h3 class="fw-bold text-primary mb-0">{{ stats.unassigned }}</h3>
+    </div></div></div>
+    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
+      <small class="text-muted">In Progress</small>
+      <h3 class="fw-bold text-warning mb-0">{{ stats.in_progress }}</h3>
+    </div></div></div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Reg ID</th><th>Name</th><th>Email</th>
+            <th>Status</th><th>Assigned</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lead in leads %}
+          <tr>
+            <td><code>{{ lead.registration_id }}</code></td>
+            <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+            <td>{{ lead.email }}</td>
+            <td>
+              <span class="badge
+                {% if lead.status=='new' %}bg-primary
+                {% elif lead.status=='in_progress' %}bg-warning text-dark
+                {% elif lead.status=='applied' %}bg-info text-dark
+                {% else %}bg-success{% endif %}">{{ lead.status }}</span>
+            </td>
+            <td>
+              {% if lead.assigned_to == current_user.id %}
+                <span class="badge bg-success-subtle text-success">You</span>
+              {% elif lead.assigned_to %}
+                <small>{{ lead.assignee.full_name }}</small>
+              {% else %}
+                <small class="text-muted">Unassigned</small>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-success">
+                Open <i class="fa-solid fa-arrow-right ms-1"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center py-4 text-muted">No leads available.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
