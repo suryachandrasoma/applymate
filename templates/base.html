@@ -28,7 +28,9 @@
             <span class="navbar-text text-light me-lg-3">
               <i class="fa-solid fa-user-circle me-1"></i>
               {{ current_user.full_name or current_user.email }}
-              <span class="badge bg-success ms-1 text-uppercase">{{ current_user.role }}</span>
+              <span class="badge {% if current_user.role=='admin' %}bg-danger{% elif current_user.role=='assigner' %}bg-primary{% elif current_user.role=='employee_s1' %}bg-info text-dark{% elif current_user.role=='employee_s2' %}bg-warning text-dark{% elif current_user.role=='employee_s3' %}bg-success{% else %}bg-secondary{% endif %} ms-1">
+                {{ current_user.role_display }}
+              </span>
             </span>
           </li>
           <li class="nav-item">

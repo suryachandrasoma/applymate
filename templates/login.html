@@ -3,35 +3,68 @@
 {% block content %}
 <div class="container py-5">
   <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card border-0 shadow-lg rounded-4">
+    <div class="col-md-7 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 mb-4">
         <div class="card-body p-4 p-md-5">
           <h3 class="fw-bold text-center mb-1">Welcome Back</h3>
           <p class="text-muted text-center small mb-4">
-            Login to your ApplyMate account
+            Login to your ApplyMate portal
           </p>
 
           <form method="POST" action="{{ url_for('login') }}">
             <div class="mb-3">
-              <label class="form-label fw-semibold small">Email</label>
-              <input type="email" name="email" class="form-control form-control-lg" required>
+              <label class="form-label fw-semibold small">Email Address</label>
+              <input type="email" id="emailInput" name="email" class="form-control form-control-lg" required>
             </div>
             <div class="mb-4">
               <label class="form-label fw-semibold small">Password</label>
-              <input type="password" name="password" class="form-control form-control-lg" required>
+              <input type="password" id="passwordInput" name="password" class="form-control form-control-lg" required>
             </div>
-            <button class="btn btn-success btn-lg w-100">
-              <i class="fa-solid fa-right-to-bracket me-2"></i> Login
+            <button class="btn btn-success btn-lg w-100 fw-bold">
+              <i class="fa-solid fa-right-to-bracket me-2"></i> Login to Dashboard
             </button>
           </form>
 
           <p class="text-center text-muted mt-4 mb-0 small">
-            Don't have an account?
-            <a href="{{ url_for('signup') }}" class="text-success fw-semibold">Sign up</a>
+            Are you a student looking for jobs?
+            <a href="{{ url_for('signup') }}" class="text-success fw-semibold">Sign up here</a>
           </p>
+        </div>
+      </div>
+
+      <!-- Quick Fill Credentials Helper -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-3">
+          <h6 class="fw-bold small mb-2 text-dark"><i class="fa-solid fa-key text-warning me-1"></i> Quick Test Accounts (Click to Fill):</h6>
+          <div class="d-flex flex-wrap gap-1">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="fillCreds('admin@applymate.com', 'Admin@123')">
+              Admin
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillCreds('assigner@applymate.com', 'Assigner@123')">
+              Assigner
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info text-dark" onclick="fillCreds('s1@applymate.com', 'S1@123')">
+              S1: Job Finder
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning text-dark" onclick="fillCreds('s2@applymate.com', 'S2@123')">
+              S2: Resume Maker
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="fillCreds('s3@applymate.com', 'S3@123')">
+              S3: Job Applier
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fillCreds(email, password) {
+  document.getElementById('emailInput').value = email;
+  document.getElementById('passwordInput').value = password;
+}
+</script>
 {% endblock %}

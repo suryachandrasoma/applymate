@@ -2,73 +2,269 @@
 {% block title %}Admin Dashboard - ApplyMate{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <h2 class="fw-bold mb-1">Admin Dashboard</h2>
-  <p class="text-muted small mb-4">Manage all student leads & assign to team members</p>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-gauge-high text-danger me-2"></i>Admin Dashboard</h2>
+      <p class="text-muted small mb-0">System overview, team orchestration, employee management, and full pipeline monitoring</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEmployeeModal">
+      <i class="fa-solid fa-user-plus me-1"></i> Add New Employee
+    </button>
+  </div>
 
+  <!-- Stats Grid -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm"><div class="card-body">
-        <small class="text-muted">Total Leads</small>
-        <h3 class="fw-bold mb-0">{{ stats.total }}</h3>
-      </div></div>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Total Leads</small>
+          <h3 class="fw-bold mb-0">{{ stats.total }}</h3>
+          <small class="text-muted">Registered Candidates</small>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm"><div class="card-body">
-        <small class="text-muted">New</small>
-        <h3 class="fw-bold text-primary mb-0">{{ stats.new }}</h3>
-      </div></div>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Jobs Sourced</small>
+          <h3 class="fw-bold text-info mb-0">{{ stats.total_jobs }}</h3>
+          <small class="text-muted">Roles matched by S1</small>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm"><div class="card-body">
-        <small class="text-muted">In Progress</small>
-        <h3 class="fw-bold text-warning mb-0">{{ stats.in_progress }}</h3>
-      </div></div>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Applications Filed</small>
+          <h3 class="fw-bold text-success mb-0">{{ stats.total_applied }}</h3>
+          <small class="text-success"><i class="fa-solid fa-check-double me-1"></i>Completed by S3</small>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm"><div class="card-body">
-        <small class="text-muted">Closed</small>
-        <h3 class="fw-bold text-success mb-0">{{ stats.closed }}</h3>
-      </div></div>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Active Team Members</small>
+          <h3 class="fw-bold text-primary mb-0">{{ stats.employees_count }}</h3>
+          <small class="text-muted">S1, S2, S3, Assigners</small>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm">
+  <!-- Student Leads & Assignments Table -->
+  <div class="card border-0 shadow-sm mb-5">
+    <div class="card-header bg-white py-3 border-0">
+      <h5 class="fw-bold mb-0"><i class="fa-solid fa-user-group text-primary me-2"></i>Student Leads & 3-Member Teams</h5>
+    </div>
     <div class="card-body p-0">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Reg ID</th><th>Name</th><th>Email</th>
-            <th>Visa</th><th>Status</th><th>Assigned To</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for lead in leads %}
-          <tr>
-            <td><code>{{ lead.registration_id }}</code></td>
-            <td>{{ lead.first_name }} {{ lead.last_name }}</td>
-            <td>{{ lead.email }}</td>
-            <td><small>{{ lead.visa_status or '—' }}</small></td>
-            <td>
-              <span class="badge
-                {% if lead.status=='new' %}bg-primary
-                {% elif lead.status=='in_progress' %}bg-warning text-dark
-                {% elif lead.status=='applied' %}bg-info text-dark
-                {% else %}bg-success{% endif %}">
-                {{ lead.status }}
-              </span>
-            </td>
-            <td>{{ lead.assignee.full_name if lead.assignee else '—' }}</td>
-            <td>
-              <a href="{{ url_for('lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-success">
-                Open <i class="fa-solid fa-arrow-right ms-1"></i>
-              </a>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No leads yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Reg ID</th>
+              <th>Student</th>
+              <th>S1: Job Finder</th>
+              <th>S2: Resume Maker</th>
+              <th>S3: Applier</th>
+              <th>Jobs & Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr>
+              <td>
+                <code class="fw-bold">{{ lead.registration_id }}</code>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ lead.full_name }}</div>
+                <div class="small text-muted">{{ lead.email }}</div>
+              </td>
+              <td>
+                {% if lead.s1_employee %}
+                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-2">
+                    {{ lead.s1_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lead.s2_employee %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2">
+                    {{ lead.s2_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lead.s3_employee %}
+                  <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle p-2">
+                    {{ lead.s3_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-muted border">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-secondary me-1">{{ lead.total_jobs }} Jobs</span>
+                <span class="badge bg-success">{{ lead.applied_jobs_count }} Applied</span>
+              </td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#adminAssignModal{{ lead.id }}">
+                  <i class="fa-solid fa-users-gear me-1"></i> Team
+                </button>
+                <a href="{{ url_for('lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-dark">
+                  Open <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+
+                <!-- Admin Team Modal -->
+                <div class="modal fade text-start" id="adminAssignModal{{ lead.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                      <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title fw-bold">
+                          <i class="fa-solid fa-users-gear me-2"></i>Assign Team: {{ lead.full_name }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('assign_lead_team', lead_id=lead.id) }}">
+                        <div class="modal-body p-4">
+                          <div class="mb-3">
+                            <label class="form-label small fw-bold text-info-emphasis">S1 Employee (Job Finder)</label>
+                            <select name="s1_id" class="form-select">
+                              <option value="">-- None --</option>
+                              {% for emp in s1_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s1_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label small fw-bold text-warning-emphasis">S2 Employee (ATS Resume Maker)</label>
+                            <select name="s2_id" class="form-select">
+                              <option value="">-- None --</option>
+                              {% for emp in s2_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s2_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label small fw-bold text-success-emphasis">S3 Employee (Job Applier)</label>
+                            <select name="s3_id" class="form-select">
+                              <option value="">-- None --</option>
+                              {% for emp in s3_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s3_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-primary fw-semibold">Save Team</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center py-4 text-muted">No student leads registered yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee Directory -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="fa-solid fa-address-book text-success me-2"></i>Staff & Employee Directory</h5>
+      <span class="small text-muted">{{ all_employees|length }} Staff Members</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Employee Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Date Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for emp in all_employees %}
+            <tr>
+              <td>
+                <div class="fw-bold">{{ emp.full_name }}</div>
+              </td>
+              <td><code>{{ emp.email }}</code></td>
+              <td>
+                <span class="badge {% if emp.role=='employee_s1' %}bg-info text-dark{% elif emp.role=='employee_s2' %}bg-warning text-dark{% elif emp.role=='employee_s3' %}bg-success{% elif emp.role=='assigner' %}bg-primary{% else %}bg-secondary{% endif %}">
+                  {{ emp.role_display }}
+                </span>
+              </td>
+              <td><small class="text-muted">{{ emp.created_at.strftime('%b %d, %Y') }}</small></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center py-3 text-muted">No employees registered yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create New Employee -->
+<div class="modal fade" id="createEmployeeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-2"></i>Register New Employee Account</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('create_employee') }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Full Name *</label>
+            <input type="text" name="full_name" class="form-control" placeholder="e.g. Alex Rivera" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Email Address *</label>
+            <input type="email" name="email" class="form-control" placeholder="e.g. alex@applymate.com" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Password *</label>
+            <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Assign Role *</label>
+            <select name="role" class="form-select" required>
+              <option value="employee_s1">S1 Employee (Job Finder / Searcher)</option>
+              <option value="employee_s2">S2 Employee (ATS Resume Maker)</option>
+              <option value="employee_s3">S3 Employee (Job Applier)</option>
+              <option value="assigner">Assigner (Lead Coordinator)</option>
+              <option value="admin">System Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-bold">Create Account</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

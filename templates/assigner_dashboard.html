@@ -2,66 +2,227 @@
 {% block title %}Assigner Dashboard - ApplyMate{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <h2 class="fw-bold mb-1">Assigner Dashboard</h2>
-  <p class="text-muted small mb-4">Your assigned leads & unassigned queue</p>
-
-  <div class="row g-3 mb-4">
-    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
-      <small class="text-muted">Assigned to me</small>
-      <h3 class="fw-bold text-success mb-0">{{ stats.mine }}</h3>
-    </div></div></div>
-    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
-      <small class="text-muted">Unassigned</small>
-      <h3 class="fw-bold text-primary mb-0">{{ stats.unassigned }}</h3>
-    </div></div></div>
-    <div class="col-4"><div class="card border-0 shadow-sm"><div class="card-body">
-      <small class="text-muted">In Progress</small>
-      <h3 class="fw-bold text-warning mb-0">{{ stats.in_progress }}</h3>
-    </div></div></div>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-users-gear text-primary me-2"></i>Assigner Dashboard</h2>
+      <p class="text-muted small mb-0">Manage registered student leads and assign dedicated 3-member teams (S1 Job Finder, S2 Resume Maker, S3 Applier)</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary p-2">
+      <i class="fa-solid fa-user-check me-1"></i> Multi-Role Lead Orchestration
+    </span>
   </div>
 
+  <!-- Key Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Total Leads</small>
+          <h3 class="fw-bold mb-0 text-dark">{{ stats.total }}</h3>
+          <small class="text-muted">Registered students</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Fully Assigned</small>
+          <h3 class="fw-bold mb-0 text-success">{{ stats.assigned_fully }}</h3>
+          <small class="text-success"><i class="fa-solid fa-check-double me-1"></i>S1 + S2 + S3 assigned</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Needs Team Assignment</small>
+          <h3 class="fw-bold mb-0 text-warning">{{ stats.unassigned }}</h3>
+          <small class="text-warning"><i class="fa-solid fa-clock me-1"></i>Pending staff allocation</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Applications Filed</small>
+          <h3 class="fw-bold mb-0 text-primary">{{ stats.total_jobs_applied }}</h3>
+          <small class="text-muted">{{ stats.total_jobs_sourced }} jobs sourced</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leads List -->
   <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-0">
+      <h5 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Student Leads & Team Assignments</h5>
+    </div>
     <div class="card-body p-0">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Reg ID</th><th>Name</th><th>Email</th>
-            <th>Status</th><th>Assigned</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for lead in leads %}
-          <tr>
-            <td><code>{{ lead.registration_id }}</code></td>
-            <td>{{ lead.first_name }} {{ lead.last_name }}</td>
-            <td>{{ lead.email }}</td>
-            <td>
-              <span class="badge
-                {% if lead.status=='new' %}bg-primary
-                {% elif lead.status=='in_progress' %}bg-warning text-dark
-                {% elif lead.status=='applied' %}bg-info text-dark
-                {% else %}bg-success{% endif %}">{{ lead.status }}</span>
-            </td>
-            <td>
-              {% if lead.assigned_to == current_user.id %}
-                <span class="badge bg-success-subtle text-success">You</span>
-              {% elif lead.assigned_to %}
-                <small>{{ lead.assignee.full_name }}</small>
-              {% else %}
-                <small class="text-muted">Unassigned</small>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{{ url_for('lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-success">
-                Open <i class="fa-solid fa-arrow-right ms-1"></i>
-              </a>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="6" class="text-center py-4 text-muted">No leads available.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Registration ID</th>
+              <th>Student Name</th>
+              <th>S1: Job Finder</th>
+              <th>S2: Resume Maker</th>
+              <th>S3: Job Applier</th>
+              <th>Jobs & Progress</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr>
+              <td>
+                <code class="fw-bold">{{ lead.registration_id }}</code>
+                <div class="small text-muted">{{ lead.created_at.strftime('%b %d, %Y') }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ lead.full_name }}</div>
+                <small class="text-muted">{{ lead.email }}</small>
+                {% if lead.visa_status %}
+                  <div><span class="badge bg-light text-dark border">{{ lead.visa_status }}</span></div>
+                {% endif %}
+              </td>
+              <td>
+                {% if lead.s1_employee %}
+                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-2">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>{{ lead.s1_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                    <i class="fa-solid fa-circle-question me-1"></i>Not Assigned
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lead.s2_employee %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2">
+                    <i class="fa-solid fa-file-pen me-1"></i>{{ lead.s2_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                    <i class="fa-solid fa-circle-question me-1"></i>Not Assigned
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lead.s3_employee %}
+                  <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle p-2">
+                    <i class="fa-solid fa-paper-plane me-1"></i>{{ lead.s3_employee.full_name }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                    <i class="fa-solid fa-circle-question me-1"></i>Not Assigned
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="small fw-semibold">{{ lead.total_jobs }} Jobs Sourced</div>
+                <div class="d-flex gap-1 mt-1">
+                  <span class="badge bg-secondary" title="S1 Drafts">{{ lead.draft_jobs_count }} Draft</span>
+                  <span class="badge bg-warning text-dark" title="S2 Resume Pending">{{ lead.s2_pending_jobs_count }} ATS Prep</span>
+                  <span class="badge bg-info text-dark" title="S3 Ready to Apply">{{ lead.s3_pending_jobs_count }} Ready</span>
+                  <span class="badge bg-success" title="Applied">{{ lead.applied_jobs_count }} Applied</span>
+                </div>
+              </td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#assignModal{{ lead.id }}">
+                  <i class="fa-solid fa-user-plus me-1"></i> Assign
+                </button>
+                <a href="{{ url_for('lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-outline-dark">
+                  View <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+
+                <!-- Assign Modal for this Lead -->
+                <div class="modal fade text-start" id="assignModal{{ lead.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                      <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold">
+                          <i class="fa-solid fa-users-gear me-2"></i>Assign Team for {{ lead.full_name }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form method="POST" action="{{ url_for('assign_lead_team', lead_id=lead.id) }}">
+                        <div class="modal-body p-4">
+                          <p class="text-muted small mb-3">
+                            Assign 3 specialized employees to handle job searching, ATS resume tailoring, and job portal applications for this candidate.
+                          </p>
+
+                          <!-- S1 Employee Selection -->
+                          <div class="mb-3">
+                            <label class="form-label fw-bold text-info-emphasis small">
+                              <i class="fa-solid fa-magnifying-glass me-1"></i>S1 Employee (Job Search & Posting)
+                            </label>
+                            <select name="s1_id" class="form-select">
+                              <option value="">-- Select S1 Employee --</option>
+                              {% for emp in s1_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s1_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-1">Responsible for finding 10-30 matching jobs and posting links & JD.</small>
+                          </div>
+
+                          <!-- S2 Employee Selection -->
+                          <div class="mb-3">
+                            <label class="form-label fw-bold text-warning-emphasis small">
+                              <i class="fa-solid fa-file-pen me-1"></i>S2 Employee (ATS Resume Specialist)
+                            </label>
+                            <select name="s2_id" class="form-select">
+                              <option value="">-- Select S2 Employee --</option>
+                              {% for emp in s2_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s2_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-1">Responsible for reviewing JD and uploading custom ATS-tailored resume.</small>
+                          </div>
+
+                          <!-- S3 Employee Selection -->
+                          <div class="mb-3">
+                            <label class="form-label fw-bold text-success-emphasis small">
+                              <i class="fa-solid fa-paper-plane me-1"></i>S3 Employee (Job Application Submitter)
+                            </label>
+                            <select name="s3_id" class="form-select">
+                              <option value="">-- Select S3 Employee --</option>
+                              {% for emp in s3_employees %}
+                                <option value="{{ emp.id }}" {% if lead.assigned_s3_id == emp.id %}selected{% endif %}>
+                                  {{ emp.full_name }} ({{ emp.email }})
+                                </option>
+                              {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-1">Responsible for applying to portals with tailored ATS resume and recording proof.</small>
+                          </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-primary fw-semibold">
+                            <i class="fa-solid fa-check me-1"></i> Save Team Assignment
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-inbox fa-2x mb-3 text-secondary d-block"></i>
+                No student leads registered yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

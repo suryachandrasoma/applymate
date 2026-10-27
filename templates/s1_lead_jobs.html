@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}S1 Job Sourcing — {{ lead.full_name }} — ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Nav -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <a href="{{ url_for('s1_dashboard') }}" class="text-decoration-none small text-muted">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to S1 Dashboard
+      </a>
+      <h3 class="fw-bold mb-0 mt-1">
+        <i class="fa-solid fa-magnifying-glass text-info me-2"></i>Job Sourcing Workspace
+      </h3>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-info-subtle text-info-emphasis p-2">
+        <i class="fa-solid fa-user-tag me-1"></i> Candidate: {{ lead.full_name }}
+      </span>
+      <code class="p-2 bg-white rounded shadow-sm">{{ lead.registration_id }}</code>
+    </div>
+  </div>
+
+  <!-- Candidate Profile Summary Card -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-id-card text-primary me-2"></i>Candidate Profile Reference
+      </h5>
+      <div class="d-flex gap-2">
+        {% if lead.resume_filename %}
+          <a href="{{ url_for('download_file', filename=lead.resume_filename) }}" class="btn btn-sm btn-outline-danger">
+            <i class="fa-solid fa-file-pdf me-1"></i> Original Resume
+          </a>
+        {% endif %}
+        {% if lead.linkedin_url %}
+          <a href="{{ lead.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="fa-brands fa-linkedin me-1"></i> LinkedIn
+          </a>
+        {% endif %}
+        {% if lead.github_url %}
+          <a href="{{ lead.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
+            <i class="fa-brands fa-github me-1"></i> GitHub
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-body pt-0">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <small class="text-muted d-block">Visa & Work Authorization</small>
+          <strong>{{ lead.visa_status or 'Not specified' }}</strong>
+          <div class="small text-muted">Sponsorship: {{ lead.sponsorship_required or '—' }} | Work Auth: {{ lead.work_authorized or '—' }}</div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted d-block">Compensation & Notice</small>
+          <strong>{{ lead.salary_currency }} {{ lead.expected_salary or 'Open' }}</strong>
+          <div class="small text-muted">Notice: {{ lead.notice_period or 'Immediate' }} | Start: {{ lead.start_date or 'Flexible' }}</div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted d-block">Work & Relocation</small>
+          <strong>{{ lead.work_arrangement or 'Any' }} / {{ lead.relocation or 'Open' }}</strong>
+          <div class="small text-muted">Travel: {{ lead.travel_willingness or '—' }}</div>
+        </div>
+        <div class="col-md-3">
+          <small class="text-muted d-block">Education & Experience</small>
+          {% for edu in lead.educations_list()[:1] %}
+            <div class="small"><strong>{{ edu.level }}</strong> in {{ edu.major }}</div>
+          {% else %}
+            <div class="small text-muted">No education listed</div>
+          {% endfor %}
+          {% for exp in lead.experiences_list()[:1] %}
+            <div class="small text-muted">{{ exp.title }} @ {{ exp.company }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Post Job Form -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+        <div class="card-header bg-info-subtle border-0 py-3">
+          <h5 class="fw-bold mb-0 text-info-emphasis">
+            <i class="fa-solid fa-plus-circle me-2"></i>Post Suitable Job for Student
+          </h5>
+          <small class="text-muted">Source 10 to 30 suitable jobs tailored to this student's profile</small>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" action="{{ url_for('s1_add_job', lead_id=lead.id) }}">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Job Title *</label>
+              <input type="text" name="job_title" class="form-control" placeholder="e.g. Software Engineer, Backend" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Company Name *</label>
+                <input type="text" name="company_name" class="form-control" placeholder="e.g. Amazon, Google, Stripe" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Job ID / Req Code</label>
+                <input type="text" name="job_id_code" class="form-control" placeholder="e.g. REQ-94821 or 29482">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Job Application URL / Link *</label>
+              <input type="url" name="job_url" class="form-control" placeholder="https://careers.company.com/job/..." required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Location</label>
+              <input type="text" name="location" class="form-control" placeholder="e.g. Seattle, WA / Hybrid / Remote">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Job Description (JD) *</label>
+              <textarea name="job_description" class="form-control" rows="5" placeholder="Paste the job description, core responsibilities, qualifications, and required tech stack here so S2 can craft the tailored ATS resume..." required></textarea>
+              <small class="text-muted">Crucial for S2 Employee to create the targeted ATS resume.</small>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label small fw-bold">S1 Matching Notes / Recommendations</label>
+              <textarea name="s1_notes" class="form-control" rows="2" placeholder="e.g. Strong match for student's Python & Docker projects; company sponsors H1B/OPT."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-info text-dark fw-bold w-100">
+              <i class="fa-solid fa-plus me-1"></i> Add Job to Lead (Save as Draft)
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jobs List & Management -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold mb-0">
+              <i class="fa-solid fa-briefcase text-info me-2"></i>Jobs Sourced for Candidate ({{ jobs|length }})
+            </h5>
+            <small class="text-muted">Recommended: 10–30 jobs per student</small>
+          </div>
+          {% set draft_jobs = jobs | selectattr('stage', 'equalto', 's1_sourcing') | list %}
+          {% if draft_jobs|length > 0 %}
+            <form method="POST" action="{{ url_for('s1_submit_all_jobs', lead_id=lead.id) }}">
+              <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" onclick="return confirm('Submit all {{ draft_jobs|length }} draft jobs to S2 ATS Resume Specialist?');">
+                <i class="fa-solid fa-paper-plane me-1"></i> Submit All Draft Jobs to S2 ({{ draft_jobs|length }})
+              </button>
+            </form>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          {% if jobs %}
+            <div class="list-group list-group-flush">
+              {% for job in jobs %}
+                <div class="list-group-item p-3">
+                  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                    <div>
+                      <h6 class="fw-bold mb-0 text-dark">
+                        {{ job.job_title }} <span class="text-muted">@ {{ job.company_name }}</span>
+                      </h6>
+                      <div class="small text-muted">
+                        {% if job.job_id_code %}
+                          <span class="badge bg-light text-dark border me-1">ID: {{ job.job_id_code }}</span>
+                        {% endif %}
+                        {% if job.location %}
+                          <i class="fa-solid fa-location-dot me-1 text-secondary"></i>{{ job.location }}
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div>
+                      <span class="badge {{ job.stage_badge_class }} p-2">
+                        {{ job.stage_display }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Link & S1 Notes -->
+                  <div class="small mb-2">
+                    <a href="{{ job.job_url }}" target="_blank" class="text-decoration-none me-3">
+                      <i class="fa-solid fa-external-link me-1"></i> Open Job Link
+                    </a>
+                    <button class="btn btn-link btn-sm p-0 text-decoration-none text-secondary" data-bs-toggle="collapse" data-bs-target="#jdCollapse{{ job.id }}">
+                      <i class="fa-solid fa-file-lines me-1"></i> View JD & Details
+                    </button>
+                  </div>
+
+                  <!-- Collapsible JD -->
+                  <div class="collapse mb-2" id="jdCollapse{{ job.id }}">
+                    <div class="card card-body bg-light border-0 small">
+                      <strong class="mb-1 text-primary">Job Description:</strong>
+                      <div style="white-space: pre-wrap;" class="text-secondary">{{ job.job_description or 'No JD details entered.' }}</div>
+                      {% if job.s1_notes %}
+                        <hr class="my-2">
+                        <strong class="text-dark">S1 Matching Remarks:</strong>
+                        <div class="text-muted">{{ job.s1_notes }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Actions per Job -->
+                  <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                    <small class="text-muted">
+                      Added: {{ job.created_at.strftime('%b %d, %Y') }}
+                      {% if job.s1_submitted_at %}
+                        &bull; Sent to S2: {{ job.s1_submitted_at.strftime('%b %d, %H:%M') }}
+                      {% endif %}
+                    </small>
+                    <div class="d-flex gap-2">
+                      {% if job.stage == 's1_sourcing' %}
+                        <form method="POST" action="{{ url_for('s1_submit_job', lead_id=lead.id, job_id=job.id) }}">
+                          <button type="submit" class="btn btn-sm btn-outline-success">
+                            <i class="fa-solid fa-check me-1"></i> Submit to S2
+                          </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('s1_delete_job', lead_id=lead.id, job_id=job.id) }}" onsubmit="return confirm('Remove this draft job?');">
+                          <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fa-solid fa-trash"></i>
+                          </button>
+                        </form>
+                      {% elif job.stage == 's2_resume' %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis">
+                          <i class="fa-solid fa-spinner fa-spin me-1"></i> S2 Creating ATS Resume
+                        </span>
+                      {% elif job.stage == 's3_apply' %}
+                        <span class="badge bg-info-subtle text-info-emphasis">
+                          <i class="fa-solid fa-file-check me-1"></i> ATS Resume Ready &bull; S3 Applying
+                        </span>
+                      {% elif job.stage == 'applied' %}
+                        <span class="badge bg-success-subtle text-success-emphasis">
+                          <i class="fa-solid fa-check-double me-1"></i> Applied!
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-file-circle-plus fa-3x mb-3 text-info d-block"></i>
+              <h6 class="fw-bold">No jobs posted yet for this candidate.</h6>
+              <p class="small text-muted mb-0">Use the form on the left to add 10 to 30 suitable jobs with links and JDs.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

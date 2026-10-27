@@ -2,18 +2,167 @@
 {% block title %}Student Dashboard - ApplyMate{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-      <h2 class="fw-bold mb-1">Student Dashboard</h2>
-      <p class="text-muted mb-0 small">Manage your ApplyMate profile & applications</p>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-graduation-cap text-success me-2"></i>Student Dashboard</h2>
+      <p class="text-muted mb-0 small">Track your profile, dedicated team progress, and real-time job application submissions</p>
     </div>
-    <a href="{{ url_for('onboarding_form') }}" class="btn btn-success">
-      <i class="fa-solid fa-pen-to-square me-2"></i>
-      {% if profile %}Edit Profile{% else %}Complete Onboarding{% endif %}
-    </a>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('onboarding_form') }}" class="btn btn-outline-success">
+        <i class="fa-solid fa-pen-to-square me-1"></i>
+        {% if profile %}Edit Profile{% else %}Complete Onboarding{% endif %}
+      </a>
+    </div>
   </div>
 
   {% if profile %}
+
+  <!-- APPLICATION PIPELINE TRACKER -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="fa-solid fa-rocket text-success me-2"></i>Your Job Application Pipeline
+        </h5>
+        <small class="text-muted">Jobs sourced by S1, tailored with ATS resumes by S2, and submitted by S3</small>
+      </div>
+      <span class="badge bg-success-subtle text-success p-2">
+        <i class="fa-solid fa-bolt me-1"></i> Live Activity Tracking
+      </span>
+    </div>
+    <div class="card-body">
+      <!-- Pipeline Stats Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded text-center">
+            <small class="text-muted fw-semibold d-block">Jobs Sourced</small>
+            <h3 class="fw-bold text-dark mb-0">{{ stats.total }}</h3>
+            <small class="text-muted">By S1 Job Finder</small>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded text-center">
+            <small class="text-muted fw-semibold d-block">ATS Resumes Ready</small>
+            <h3 class="fw-bold text-info mb-0">{{ stats.s3_apply + stats.applied }}</h3>
+            <small class="text-muted">By S2 ATS Specialist</small>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded text-center">
+            <small class="text-muted fw-semibold d-block">Applications Filed</small>
+            <h3 class="fw-bold text-success mb-0">{{ stats.applied }}</h3>
+            <small class="text-success"><i class="fa-solid fa-check-double me-1"></i>By S3 Job Applier</small>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 bg-light rounded text-center">
+            <small class="text-muted fw-semibold d-block">In Preparation</small>
+            <h3 class="fw-bold text-warning mb-0">{{ stats.s1_sourcing + stats.s2_resume }}</h3>
+            <small class="text-muted">Currently active</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jobs Table -->
+      {% if jobs %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Company & Job Title</th>
+                <th>Req ID / Location</th>
+                <th>Tailored ATS Resume</th>
+                <th>Status & Progress</th>
+                <th>Application Confirmation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ job.job_title }}</div>
+                  <div class="text-primary small fw-semibold">{{ job.company_name }}</div>
+                  <a href="{{ job.job_url }}" target="_blank" class="small text-decoration-none">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Posting Link
+                  </a>
+                </td>
+                <td>
+                  {% if job.job_id_code %}
+                    <span class="badge bg-light text-dark border">{{ job.job_id_code }}</span>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                  {% if job.location %}
+                    <div class="small text-muted mt-1"><i class="fa-solid fa-location-dot me-1"></i>{{ job.location }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.ats_resume_filename %}
+                    <a href="{{ url_for('download_file', filename=job.ats_resume_filename) }}" class="btn btn-sm btn-outline-success">
+                      <i class="fa-solid fa-file-pdf me-1"></i> Download Tailored Resume
+                    </a>
+                    {% if job.s2_notes %}
+                      <small class="d-block text-muted mt-1" style="max-width: 200px;">{{ job.s2_notes }}</small>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary">
+                      <i class="fa-solid fa-hourglass-half me-1"></i> Being Tailored
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.stage == 'applied' %}
+                    <span class="badge bg-success p-2">
+                      <i class="fa-solid fa-check-double me-1"></i> Applied
+                    </span>
+                    <div class="small text-muted mt-1">
+                      {{ job.application_date.strftime('%b %d, %Y') if job.application_date else 'Recently' }}
+                    </div>
+                  {% elif job.stage == 's3_apply' %}
+                    <span class="badge bg-info text-dark p-2">
+                      <i class="fa-solid fa-bolt me-1"></i> Ready &bull; Applying Shortly
+                    </span>
+                  {% elif job.stage == 's2_resume' %}
+                    <span class="badge bg-warning text-dark p-2">
+                      <i class="fa-solid fa-file-pen me-1"></i> ATS Resume in Prep
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary p-2">
+                      <i class="fa-solid fa-magnifying-glass me-1"></i> Job Sourced
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.portal_submission_id %}
+                    <div><strong>ID:</strong> <code>{{ job.portal_submission_id }}</code></div>
+                  {% endif %}
+                  {% if job.s3_notes %}
+                    <div class="small text-muted">{{ job.s3_notes }}</div>
+                  {% endif %}
+                  {% if job.proof_filename %}
+                    <a href="{{ url_for('download_file', filename=job.proof_filename) }}" class="small text-decoration-none">
+                      <i class="fa-solid fa-receipt me-1"></i> Application Proof
+                    </a>
+                  {% endif %}
+                  {% if not job.portal_submission_id and not job.s3_notes and job.stage != 'applied' %}
+                    <span class="text-muted small">Pending application</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="fa-solid fa-briefcase fa-2x mb-2 text-secondary d-block"></i>
+          Your dedicated team has been notified. Jobs will start appearing here as S1 sources matching positions!
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PROFILE CARDS -->
   <div class="row g-4">
     <div class="col-md-4">
       <div class="card border-0 shadow-sm h-100">
@@ -78,7 +227,7 @@
             <div class="col-md-6">
               {% if profile.resume_filename %}
                 <p><i class="fa-solid fa-file-pdf text-danger me-2"></i>
-                  <a href="{{ url_for('download_file', filename=profile.resume_filename) }}">Resume / CV</a>
+                  <a href="{{ url_for('download_file', filename=profile.resume_filename) }}">Original Resume / CV</a>
                 </p>
               {% else %}<p class="text-muted small">No resume uploaded.</p>{% endif %}
 

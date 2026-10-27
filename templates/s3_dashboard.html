@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}S3 Employee Dashboard - ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-paper-plane text-success me-2"></i>S3 Employee Panel — Job Applier</h2>
+      <p class="text-muted small mb-0">Apply to job portals with candidate details and custom ATS resumes, record application confirmations, and update the student profile</p>
+    </div>
+    <span class="badge bg-success-subtle text-success-emphasis p-2">
+      <i class="fa-solid fa-circle-check me-1"></i> Application Execution & Tracking
+    </span>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Assigned Candidates</small>
+          <h3 class="fw-bold mb-0 text-dark">{{ stats.assigned_students }}</h3>
+          <small class="text-muted">Candidates allocated to you</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Ready to Apply (ATS Resumes Ready)</small>
+          <h3 class="fw-bold mb-0 text-info">{{ stats.ready_to_apply }}</h3>
+          <small class="text-info"><i class="fa-solid fa-bolt me-1"></i>ATS resume uploaded & awaiting application</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Applications Filed & Verified</small>
+          <h3 class="fw-bold mb-0 text-success">{{ stats.total_applied }}</h3>
+          <small class="text-success"><i class="fa-solid fa-check-double me-1"></i>Reflected directly on student profiles</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Candidates Table -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="fa-solid fa-users-gear text-success me-2"></i>Your Assigned Candidates</h5>
+      <span class="small text-muted">Apply using tailored ATS resumes</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Reg ID</th>
+              <th>Candidate Name & Details</th>
+              <th>Visa / Work Auth</th>
+              <th>Jobs Ready to Apply</th>
+              <th>Total Applied</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr>
+              <td>
+                <code class="fw-bold">{{ lead.registration_id }}</code>
+                <div class="small text-muted">{{ lead.created_at.strftime('%b %d, %Y') }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ lead.full_name }}</div>
+                <div class="small text-muted">{{ lead.email }} | {{ lead.phone or '—' }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ lead.visa_status or 'Not specified' }}</span>
+                <div class="small text-muted">Auth: {{ lead.work_authorized or '—' }}</div>
+              </td>
+              <td>
+                {% if lead.s3_pending_jobs_count > 0 %}
+                  <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                    <i class="fa-solid fa-paper-plane me-1"></i> {{ lead.s3_pending_jobs_count }} Ready to Apply
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">
+                    No jobs currently queued
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-bold text-success fs-6">{{ lead.applied_jobs_count }}</span>
+                <span class="text-muted small">applied</span>
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('s3_lead_jobs', lead_id=lead.id) }}" class="btn btn-success fw-bold btn-sm shadow-sm">
+                  <i class="fa-solid fa-rocket me-1"></i> Open Application Workspace
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-user-clock fa-2x mb-3 text-secondary d-block"></i>
+                No candidates assigned to you yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Immediate Ready-to-Apply Jobs Queue -->
+  {% if ready_to_apply %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-info-subtle py-3 border-0">
+      <h5 class="fw-bold mb-0 text-info-emphasis">
+        <i class="fa-solid fa-bolt me-2"></i>Immediate Action: Jobs Ready for Application ({{ ready_to_apply|length }})
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Job Title & Company</th>
+              <th>Candidate</th>
+              <th>Job Link</th>
+              <th>Tailored ATS Resume</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in ready_to_apply %}
+            <tr>
+              <td>
+                <div class="fw-bold">{{ job.job_title }}</div>
+                <span class="text-muted small">{{ job.company_name }}</span>
+                {% if job.job_id_code %}<span class="badge bg-light text-dark border ms-1">ID: {{ job.job_id_code }}</span>{% endif %}
+              </td>
+              <td>
+                <div class="fw-semibold">{{ job.lead.full_name }}</div>
+                <code class="small">{{ job.lead.registration_id }}</code>
+              </td>
+              <td>
+                <a href="{{ job.job_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                  <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Portal
+                </a>
+              </td>
+              <td>
+                {% if job.ats_resume_filename %}
+                  <a href="{{ url_for('download_file', filename=job.ats_resume_filename) }}" class="btn btn-sm btn-outline-success">
+                    <i class="fa-solid fa-file-pdf me-1"></i> ATS Resume
+                  </a>
+                {% else %}
+                  <span class="text-muted small">Pending</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('s3_lead_jobs', lead_id=job.lead.id) }}" class="btn btn-sm btn-success fw-semibold">
+                  Apply Now <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

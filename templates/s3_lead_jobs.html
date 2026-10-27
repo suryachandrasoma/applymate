@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}S3 Job Application Workspace — {{ lead.full_name }} — ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Nav -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <a href="{{ url_for('s3_dashboard') }}" class="text-decoration-none small text-muted">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to S3 Dashboard
+      </a>
+      <h3 class="fw-bold mb-0 mt-1">
+        <i class="fa-solid fa-paper-plane text-success me-2"></i>Job Application Execution Workspace
+      </h3>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success-subtle text-success-emphasis p-2">
+        <i class="fa-solid fa-user-tag me-1"></i> Candidate: {{ lead.full_name }}
+      </span>
+      <code class="p-2 bg-white rounded shadow-sm">{{ lead.registration_id }}</code>
+    </div>
+  </div>
+
+  <!-- Candidate Quick Application Reference Sheet (Cheat Sheet for filling forms) -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-success-subtle py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold mb-0 text-success-emphasis">
+          <i class="fa-solid fa-clipboard-check me-2"></i>Candidate Application Reference Sheet
+        </h5>
+        <small class="text-muted">Use these details to swiftly fill out Workday, Greenhouse, Lever, and company portal questions</small>
+      </div>
+      <button class="btn btn-sm btn-outline-success" type="button" data-bs-toggle="collapse" data-bs-target="#candidateDetailsCard">
+        Toggle Details
+      </button>
+    </div>
+    <div class="collapse show" id="candidateDetailsCard">
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Col 1: Personal & Contact -->
+          <div class="col-md-4 border-end">
+            <h6 class="fw-bold text-dark small mb-2"><i class="fa-solid fa-id-card me-1 text-primary"></i>Personal & Contact</h6>
+            <div class="small mb-1"><strong>Full Name:</strong> {{ lead.full_name }}</div>
+            <div class="small mb-1"><strong>Email:</strong> <code>{{ lead.email }}</code></div>
+            <div class="small mb-1"><strong>Phone:</strong> {{ lead.phone_country_code }} {{ lead.phone }}</div>
+            <div class="small mb-1"><strong>DOB:</strong> {{ lead.dob or '—' }}</div>
+            <div class="small mb-1"><strong>Address:</strong> {{ lead.street }}, {{ lead.city }}, {{ lead.state }} {{ lead.postal_code }}</div>
+            {% if lead.linkedin_url %}
+              <div class="small mb-1"><strong>LinkedIn:</strong> <a href="{{ lead.linkedin_url }}" target="_blank">Link</a></div>
+            {% endif %}
+            {% if lead.github_url %}
+              <div class="small mb-1"><strong>GitHub:</strong> <a href="{{ lead.github_url }}" target="_blank">Link</a></div>
+            {% endif %}
+          </div>
+
+          <!-- Col 2: Visa & Work Auth -->
+          <div class="col-md-4 border-end">
+            <h6 class="fw-bold text-dark small mb-2"><i class="fa-solid fa-passport me-1 text-warning"></i>Visa & Authorization</h6>
+            <div class="small mb-1"><strong>Work Authorized:</strong> <span class="badge bg-light text-dark border">{{ lead.work_authorized or '—' }}</span></div>
+            <div class="small mb-1"><strong>Visa Status:</strong> <span class="badge bg-light text-dark border">{{ lead.visa_status or '—' }}</span></div>
+            <div class="small mb-1"><strong>Sponsorship Needed:</strong> <span class="badge bg-light text-dark border">{{ lead.sponsorship_required or '—' }}</span></div>
+            <div class="small mb-1"><strong>Security Clearance:</strong> {{ lead.security_clearance or 'None' }}</div>
+            <div class="small mb-1"><strong>Veteran:</strong> {{ lead.veteran_status or '—' }}</div>
+            <div class="small mb-1"><strong>Disability:</strong> {{ lead.disability_status or '—' }}</div>
+          </div>
+
+          <!-- Col 3: Preferences & Comp -->
+          <div class="col-md-4">
+            <h6 class="fw-bold text-dark small mb-2"><i class="fa-solid fa-coins me-1 text-success"></i>Comp & Availability</h6>
+            <div class="small mb-1"><strong>Expected Salary:</strong> {{ lead.salary_currency }} {{ lead.expected_salary or 'Open' }}</div>
+            <div class="small mb-1"><strong>Notice Period:</strong> {{ lead.notice_period or 'Immediate' }}</div>
+            <div class="small mb-1"><strong>Start Date:</strong> {{ lead.start_date or 'Flexible' }}</div>
+            <div class="small mb-1"><strong>Work Schedule:</strong> {{ lead.work_schedule or 'Full-time' }}</div>
+            <div class="small mb-1"><strong>Arrangement:</strong> {{ lead.work_arrangement or 'Any' }}</div>
+            <div class="small mb-1"><strong>Relocation:</strong> {{ lead.relocation or 'Open' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: Jobs Ready to Apply -->
+  {% set ready_jobs = jobs | selectattr('stage', 'equalto', 's3_apply') | list %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="fa-solid fa-bolt text-info me-2"></i>Ready to Apply — Tailored Resumes Attached ({{ ready_jobs|length }})
+        </h5>
+        <small class="text-muted">Open the job link, download the ATS resume prepared by S2, complete the application, and mark applied</small>
+      </div>
+      <span class="badge bg-info-subtle text-info-emphasis p-2">{{ ready_jobs|length }} Actionable Roles</span>
+    </div>
+    <div class="card-body p-0">
+      {% if ready_jobs %}
+        <div class="list-group list-group-flush">
+          {% for job in ready_jobs %}
+            <div class="list-group-item p-4">
+              <div class="row g-3 align-items-start">
+                
+                <!-- Job details & buttons -->
+                <div class="col-lg-6">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <h5 class="fw-bold mb-1 text-dark">{{ job.job_title }}</h5>
+                      <span class="fs-6 text-primary fw-semibold">{{ job.company_name }}</span>
+                    </div>
+                    <span class="badge bg-info text-dark p-2">Ready to Apply</span>
+                  </div>
+
+                  <div class="small mb-3">
+                    {% if job.job_id_code %}
+                      <span class="badge bg-light text-dark border me-1">Req ID: {{ job.job_id_code }}</span>
+                    {% endif %}
+                    {% if job.location %}
+                      <span class="text-muted me-2"><i class="fa-solid fa-location-dot me-1"></i>{{ job.location }}</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Action Buttons: External Portal & ATS Resume -->
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a href="{{ job.job_url }}" target="_blank" class="btn btn-primary btn-sm fw-semibold shadow-sm">
+                      <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> 1. Open Job Portal Link
+                    </a>
+                    {% if job.ats_resume_filename %}
+                      <a href="{{ url_for('download_file', filename=job.ats_resume_filename) }}" class="btn btn-success btn-sm fw-semibold shadow-sm">
+                        <i class="fa-solid fa-download me-1"></i> 2. Download Tailored ATS Resume
+                      </a>
+                    {% endif %}
+                  </div>
+
+                  {% if job.s2_notes %}
+                    <div class="alert alert-light border small py-2 px-3 mb-0">
+                      <strong><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i>S2 ATS Notes:</strong> {{ job.s2_notes }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- Mark as Applied Form -->
+                <div class="col-lg-6">
+                  <div class="card bg-light border-0">
+                    <div class="card-body p-3">
+                      <h6 class="fw-bold text-success mb-2">
+                        <i class="fa-solid fa-circle-check me-1"></i>Confirm Job Application Submission
+                      </h6>
+                      <form method="POST" action="{{ url_for('s3_mark_applied', lead_id=lead.id, job_id=job.id) }}" enctype="multipart/form-data">
+                        <div class="mb-2">
+                          <label class="form-label small fw-semibold">Application Confirmation Code / Portal ID</label>
+                          <input type="text" name="portal_submission_id" class="form-control form-control-sm" placeholder="e.g. WD-102948 or GH-83921">
+                        </div>
+
+                        <div class="mb-2">
+                          <label class="form-label small fw-semibold">Application Notes / Portal Remarks</label>
+                          <input type="text" name="s3_notes" class="form-control form-control-sm" placeholder="e.g. Applied via Workday; answered visa F1-OPT questions per profile">
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Upload Application Proof (Optional screenshot or PDF)</label>
+                          <input type="file" name="proof_file" class="form-control form-control-sm" accept=".pdf,.png,.jpg,.jpeg">
+                        </div>
+
+                        <button type="submit" class="btn btn-success fw-bold w-100">
+                          <i class="fa-solid fa-check-double me-1"></i> Confirm & Mark as Applied
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-circle-check fa-3x mb-3 text-success d-block"></i>
+          <h6 class="fw-bold">No jobs currently queued for application.</h6>
+          <p class="small text-muted mb-0">Once S2 Employee uploads the custom ATS resumes, they will appear here ready to apply.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SECTION 2: Already Applied Jobs -->
+  {% set applied_jobs = jobs | selectattr('stage', 'equalto', 'applied') | list %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-circle-check text-success me-2"></i>Applications Submitted for Candidate ({{ applied_jobs|length }})
+      </h5>
+      <span class="small text-muted">Reflected in real-time on student profile</span>
+    </div>
+    <div class="card-body p-0">
+      {% if applied_jobs %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Job Title & Company</th>
+                <th>Confirmation ID</th>
+                <th>Applied Date</th>
+                <th>Tailored Resume Used</th>
+                <th>Proof / Notes</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in applied_jobs %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ job.job_title }}</div>
+                  <div class="small text-muted">{{ job.company_name }}</div>
+                  <a href="{{ job.job_url }}" target="_blank" class="small text-decoration-none">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Job Link
+                  </a>
+                </td>
+                <td>
+                  {% if job.portal_submission_id %}
+                    <code>{{ job.portal_submission_id }}</code>
+                  {% else %}
+                    <span class="text-muted small">Confirmed</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-muted">
+                    {{ job.application_date.strftime('%b %d, %Y %H:%M') if job.application_date else 'Applied' }}
+                  </small>
+                </td>
+                <td>
+                  {% if job.ats_resume_filename %}
+                    <a href="{{ url_for('download_file', filename=job.ats_resume_filename) }}" class="btn btn-sm btn-outline-success">
+                      <i class="fa-solid fa-file-pdf me-1"></i> View Resume
+                    </a>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.proof_filename %}
+                    <a href="{{ url_for('download_file', filename=job.proof_filename) }}" class="btn btn-sm btn-outline-secondary me-1">
+                      <i class="fa-solid fa-image me-1"></i> Proof
+                    </a>
+                  {% endif %}
+                  {% if job.s3_notes %}
+                    <small class="text-muted d-block">{{ job.s3_notes }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-success p-2">
+                    <i class="fa-solid fa-check-double me-1"></i> Applied
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">
+          No applications completed yet for this candidate.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,41 +1,188 @@
 {% extends "base.html" %}
 {% block title %}Lead Detail - {{ lead.registration_id }}{% endblock %}
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
+
+  <!-- Breadcrumbs & Status Header -->
   <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
     <div>
-      <h3 class="fw-bold mb-0">{{ lead.first_name }} {{ lead.last_name }}</h3>
+      <a href="javascript:history.back()" class="text-decoration-none small text-muted">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back
+      </a>
+      <h3 class="fw-bold mb-0 mt-1">{{ lead.first_name }} {{ lead.last_name }}</h3>
       <code class="small">{{ lead.registration_id }}</code>
+      <span class="badge bg-light text-dark border ms-2">Registered: {{ lead.created_at.strftime('%b %d, %Y') }}</span>
     </div>
-    <div class="d-flex gap-2">
-      {% if current_user.role == 'admin' %}
-      <form method="POST" action="{{ url_for('assign_lead', lead_id=lead.id) }}" class="d-flex gap-2">
-        <select name="assigner_id" class="form-select form-select-sm">
-          <option value="">Unassigned</option>
-          {% for a in assigners %}
-            <option value="{{ a.id }}" {% if lead.assigned_to==a.id %}selected{% endif %}>{{ a.full_name }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-sm btn-success">Assign</button>
-      </form>
-      {% endif %}
 
+    <!-- Status updater -->
+    <div class="d-flex gap-2">
       <form method="POST" action="{{ url_for('update_lead_status', lead_id=lead.id) }}" class="d-flex gap-2">
         <select name="status" class="form-select form-select-sm">
           {% for s in ['new','in_progress','applied','closed'] %}
             <option value="{{ s }}" {% if lead.status==s %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
           {% endfor %}
         </select>
-        <button class="btn btn-sm btn-dark">Update</button>
+        <button class="btn btn-sm btn-dark">Update Status</button>
       </form>
     </div>
   </div>
 
+  <!-- TEAM ASSIGNMENT CARD -->
+  {% if current_user.role in ['admin', 'assigner'] %}
+  <div class="card border-0 shadow-sm mb-4 bg-primary-subtle bg-opacity-25 border border-primary-subtle">
+    <div class="card-body">
+      <h5 class="fw-bold text-primary mb-2">
+        <i class="fa-solid fa-users-gear me-2"></i>Dedicated 3-Member Employee Team
+      </h5>
+      <p class="small text-muted mb-3">Assign or update the specific S1, S2, and S3 employees responsible for this candidate.</p>
+
+      <form method="POST" action="{{ url_for('assign_lead_team', lead_id=lead.id) }}">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold text-info-emphasis">
+              <i class="fa-solid fa-magnifying-glass me-1"></i>S1 Employee (Job Finder)
+            </label>
+            <select name="s1_id" class="form-select form-select-sm">
+              <option value="">-- None Assigned --</option>
+              {% for emp in s1_employees %}
+                <option value="{{ emp.id }}" {% if lead.assigned_s1_id == emp.id %}selected{% endif %}>
+                  {{ emp.full_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-bold text-warning-emphasis">
+              <i class="fa-solid fa-file-pen me-1"></i>S2 Employee (Resume Maker)
+            </label>
+            <select name="s2_id" class="form-select form-select-sm">
+              <option value="">-- None Assigned --</option>
+              {% for emp in s2_employees %}
+                <option value="{{ emp.id }}" {% if lead.assigned_s2_id == emp.id %}selected{% endif %}>
+                  {{ emp.full_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-bold text-success-emphasis">
+              <i class="fa-solid fa-paper-plane me-1"></i>S3 Employee (Job Applier)
+            </label>
+            <select name="s3_id" class="form-select form-select-sm">
+              <option value="">-- None Assigned --</option>
+              {% for emp in s3_employees %}
+                <option value="{{ emp.id }}" {% if lead.assigned_s3_id == emp.id %}selected{% endif %}>
+                  {{ emp.full_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-sm btn-primary fw-semibold">
+              <i class="fa-solid fa-check me-1"></i> Save Team Assignment
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- JOBS PIPELINE FOR THIS CANDIDATE -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold mb-0">
+          <i class="fa-solid fa-briefcase text-success me-2"></i>Job Applications Pipeline ({{ jobs|length }} Total)
+        </h5>
+        <small class="text-muted">Jobs sourced by S1, tailored with ATS resumes by S2, and submitted by S3</small>
+      </div>
+      <div class="d-flex gap-1">
+        <span class="badge bg-secondary">{{ lead.draft_jobs_count }} Draft</span>
+        <span class="badge bg-warning text-dark">{{ lead.s2_pending_jobs_count }} ATS Prep</span>
+        <span class="badge bg-info text-dark">{{ lead.s3_pending_jobs_count }} Ready</span>
+        <span class="badge bg-success">{{ lead.applied_jobs_count }} Applied</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      {% if jobs %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Company & Title</th>
+                <th>Req ID & URL</th>
+                <th>Stage</th>
+                <th>S2 Tailored Resume</th>
+                <th>S3 Application Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ job.job_title }}</div>
+                  <div class="small text-muted">{{ job.company_name }}</div>
+                  {% if job.location %}<small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ job.location }}</small>{% endif %}
+                </td>
+                <td>
+                  {% if job.job_id_code %}<code>{{ job.job_id_code }}</code><br>{% endif %}
+                  <a href="{{ job.job_url }}" target="_blank" class="small text-decoration-none">
+                    <i class="fa-solid fa-external-link me-1"></i> Link
+                  </a>
+                </td>
+                <td>
+                  <span class="badge {{ job.stage_badge_class }} p-2">
+                    {{ job.stage_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if job.ats_resume_filename %}
+                    <a href="{{ url_for('download_file', filename=job.ats_resume_filename) }}" class="btn btn-sm btn-outline-success">
+                      <i class="fa-solid fa-file-pdf me-1"></i> ATS Resume
+                    </a>
+                    {% if job.s2_notes %}
+                      <small class="d-block text-muted mt-1">{{ job.s2_notes }}</small>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Not uploaded</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if job.stage == 'applied' %}
+                    <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Applied</span>
+                    {% if job.portal_submission_id %}
+                      <div class="small"><code>{{ job.portal_submission_id }}</code></div>
+                    {% endif %}
+                    {% if job.application_date %}
+                      <div class="small text-muted">{{ job.application_date.strftime('%b %d, %Y') }}</div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Pending apply</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">
+          No jobs have been added yet for this student lead.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CANDIDATE PROFILE DETAILS -->
   <div class="row g-4">
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-user me-2"></i>Personal Info</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-user me-2"></i>Personal Info</h6>
           <p class="small mb-1"><strong>Email:</strong> {{ lead.email }}</p>
           <p class="small mb-1"><strong>Phone:</strong> {{ lead.phone_country_code }} {{ lead.phone }}</p>
           <p class="small mb-1"><strong>DOB:</strong> {{ lead.dob }}</p>
@@ -52,9 +199,9 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-passport me-2"></i>Visa & Clearance</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-passport me-2"></i>Visa & Clearance</h6>
           <p class="small mb-1"><strong>Work authorized:</strong> {{ lead.work_authorized }}</p>
           <p class="small mb-1"><strong>Visa:</strong> {{ lead.visa_status }}</p>
           <p class="small mb-1"><strong>Sponsorship required:</strong> {{ lead.sponsorship_required }}</p>
@@ -64,9 +211,9 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-briefcase me-2"></i>Experience</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-briefcase me-2"></i>Experience</h6>
           {% for exp in lead.experiences_list() %}
             <div class="mb-2 pb-2 border-bottom">
               <div class="fw-semibold small">{{ exp.title }} — {{ exp.company }}</div>
@@ -79,9 +226,9 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-graduation-cap me-2"></i>Education</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-graduation-cap me-2"></i>Education</h6>
           {% for edu in lead.educations_list() %}
             <div class="mb-2 pb-2 border-bottom">
               <div class="fw-semibold small">{{ edu.level }} — {{ edu.major }}</div>
@@ -93,9 +240,9 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-money-bill-wave me-2"></i>Compensation & Availability</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-money-bill-wave me-2"></i>Compensation & Availability</h6>
           <p class="small mb-1"><strong>Expected salary:</strong> {{ lead.salary_currency }} {{ lead.expected_salary }}</p>
           <p class="small mb-1"><strong>Start date:</strong> {{ lead.start_date }}</p>
           <p class="small mb-1"><strong>Notice:</strong> {{ lead.notice_period }}</p>
@@ -105,23 +252,12 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-map-location-dot me-2"></i>Travel & Preferences</h6>
-          <p class="small mb-1"><strong>Relocation:</strong> {{ lead.relocation }}</p>
-          <p class="small mb-1"><strong>Work arrangement:</strong> {{ lead.work_arrangement }}</p>
-          <p class="small mb-0"><strong>Travel:</strong> {{ lead.travel_willingness }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-paperclip me-2"></i>Documents & Links</h6>
+          <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-paperclip me-2"></i>Documents & Links</h6>
           {% if lead.resume_filename %}
             <p class="small mb-1"><i class="fa-solid fa-file-pdf text-danger me-2"></i>
-              <a href="{{ url_for('download_file', filename=lead.resume_filename) }}">Resume</a></p>
+              <a href="{{ url_for('download_file', filename=lead.resume_filename) }}">Original Candidate Resume</a></p>
           {% endif %}
           {% if lead.cover_letter_filename %}
             <p class="small mb-1"><i class="fa-solid fa-file-lines text-primary me-2"></i>
@@ -131,18 +267,6 @@
             <p class="small mb-1"><i class="fa-solid fa-link text-success me-2"></i>
               <a href="{{ link }}" target="_blank">{{ link }}</a></p>
           {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-6">
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <h6 class="fw-bold text-success"><i class="fa-solid fa-shield-heart me-2"></i>Demographics</h6>
-          <p class="small mb-1"><strong>Gender:</strong> {{ lead.gender }}</p>
-          <p class="small mb-1"><strong>Ethnicity:</strong> {{ lead.ethnicity }}</p>
-          <p class="small mb-1"><strong>Veteran:</strong> {{ lead.veteran_status }}</p>
-          <p class="small mb-0"><strong>Disability:</strong> {{ lead.disability_status }}</p>
         </div>
       </div>
     </div>

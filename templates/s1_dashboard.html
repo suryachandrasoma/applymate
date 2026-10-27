@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}S1 Employee Dashboard - ApplyMate{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fa-solid fa-magnifying-glass text-info me-2"></i>S1 Employee Panel — Job Finder</h2>
+      <p class="text-muted small mb-0">Search suitable jobs (10–30 roles per candidate) and post job links, IDs, and job descriptions (JD)</p>
+    </div>
+    <span class="badge bg-info-subtle text-info-emphasis p-2">
+      <i class="fa-solid fa-briefcase me-1"></i> Job Sourcing & Lead Matching
+    </span>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Assigned Candidates</small>
+          <h3 class="fw-bold mb-0 text-dark">{{ stats.assigned_students }}</h3>
+          <small class="text-muted">Students to source jobs for</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Total Jobs Sourced</small>
+          <h3 class="fw-bold mb-0 text-primary">{{ stats.total_jobs_sourced }}</h3>
+          <small class="text-muted">Across all your candidates</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Draft Jobs (Unsubmitted)</small>
+          <h3 class="fw-bold mb-0 text-warning">{{ stats.draft_jobs }}</h3>
+          <small class="text-warning"><i class="fa-solid fa-pencil me-1"></i>Ready to forward to S2</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <small class="text-muted fw-semibold">Submitted to S2 (ATS Prep)</small>
+          <h3 class="fw-bold mb-0 text-success">{{ stats.submitted_to_s2 }}</h3>
+          <small class="text-success"><i class="fa-solid fa-check me-1"></i>Forwarded to S2 Resume Maker</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Candidates Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="fa-solid fa-user-graduate me-2 text-info"></i>Your Assigned Student Candidates</h5>
+      <span class="small text-muted">Target: 10 to 30 jobs per candidate</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Reg ID</th>
+              <th>Candidate Name & Details</th>
+              <th>Visa / Work Auth</th>
+              <th>Preferences & Notice</th>
+              <th>Jobs Sourced</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr>
+              <td>
+                <code class="fw-bold">{{ lead.registration_id }}</code>
+                <div class="small text-muted">{{ lead.created_at.strftime('%b %d, %Y') }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ lead.full_name }}</div>
+                <div class="small text-muted">{{ lead.email }} | {{ lead.phone or 'No phone' }}</div>
+                {% if lead.linkedin_url %}
+                  <a href="{{ lead.linkedin_url }}" target="_blank" class="small text-decoration-none me-2">
+                    <i class="fa-brands fa-linkedin text-primary"></i> LinkedIn
+                  </a>
+                {% endif %}
+                {% if lead.resume_filename %}
+                  <a href="{{ url_for('download_file', filename=lead.resume_filename) }}" class="small text-decoration-none text-danger">
+                    <i class="fa-solid fa-file-pdf"></i> Original Resume
+                  </a>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ lead.visa_status or 'Not specified' }}</span>
+                <div class="small text-muted mt-1">Sponsorship: {{ lead.sponsorship_required or '—' }}</div>
+              </td>
+              <td>
+                <div class="small"><strong>Relocation:</strong> {{ lead.relocation or 'Any' }}</div>
+                <div class="small"><strong>Schedule:</strong> {{ lead.work_schedule or 'Full-time' }}</div>
+                <div class="small"><strong>Expected:</strong> {{ lead.salary_currency }} {{ lead.expected_salary or 'Open' }}</div>
+              </td>
+              <td>
+                <span class="fw-bold fs-5">{{ lead.total_jobs }}</span>
+                <span class="text-muted small">jobs added</span>
+                <div class="d-flex gap-1 mt-1">
+                  {% if lead.draft_jobs_count > 0 %}
+                    <span class="badge bg-warning text-dark">{{ lead.draft_jobs_count }} Draft</span>
+                  {% endif %}
+                  {% if lead.applied_jobs_count > 0 %}
+                    <span class="badge bg-success">{{ lead.applied_jobs_count }} Applied</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('s1_lead_jobs', lead_id=lead.id) }}" class="btn btn-info text-dark fw-semibold btn-sm">
+                  <i class="fa-solid fa-plus me-1"></i> Add & Manage Jobs
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-user-clock fa-2x mb-3 text-secondary d-block"></i>
+                No students currently assigned to you. Contact your Assigner.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
